@@ -315,6 +315,11 @@ def build_vllm_cli_args(cfg: SkyRLTrainConfig) -> Namespace:
         # mixin; it is not compatible with the fork's NeuronWorker, which
         # implements its own weight-transfer receive path. Do not apply it.
         args.worker_extension_cls = ""
+        # Pin the worker class explicitly: the standalone `python -m` server path
+        # resolves worker_cls="auto" to the CUDA GPU worker (vllm.v1.worker.
+        # gpu_worker.Worker), which fails on Neuron. Name the fork's NeuronWorker
+        # so both the Ray-actor and standalone paths pick it up.
+        args.worker_cls = "vllm_neuron.vllm.worker.neuron_worker.NeuronWorker"
     else:
         args.weight_transfer_config = WeightTransferConfig(
             backend=get_vllm_receive_backend(ie_cfg.weight_sync_backend, cfg.trainer.placement.colocate_all),
