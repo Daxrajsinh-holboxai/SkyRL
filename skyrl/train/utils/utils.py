@@ -669,6 +669,12 @@ def validate_cfg(cfg: SkyRLTrainConfig):
                 "generator.inference_engine.backend='vllm_neuron' does not serve LoRA "
                 "adapters; use full-weight sync (lora.rank=0 or merge_lora=true)."
             )
+        if cfg.generator.inference_engine.tensor_parallel_size > 1:
+            raise ValueError(
+                "generator.inference_engine.backend='vllm_neuron' serves with the "
+                "uniproc executor and supports tensor_parallel_size=1 only; set "
+                "generator.inference_engine.tensor_parallel_size=1."
+            )
 
     # Validate placement
     if cfg.trainer.placement.colocate_all:
@@ -1471,7 +1477,16 @@ def _probe_bundle_placement(pg, device_resource_key: str = "GPU"):
     bundle_to_node_ids = pg_data["bundles_to_node_id"]
 
     if device_resource_key == "neuron_cores":
-        device_ids = list(range(num_bundles))
+        # The device id must be the node-local core index: each node numbers its
+        # own Neuron cores 0..N-1, so the global bundle index overruns the core
+        # range on the second node of a multi-node cluster. Count bundles per
+        # node to derive the local index.
+        node_core_counts: dict[str, int] = {}
+        device_ids = []
+        for node_id in bundle_to_node_ids:
+            local_idx = node_core_counts.get(node_id, 0)
+            node_core_counts[node_id] = local_idx + 1
+            device_ids.append(local_idx)
     else:
         info_actors = []
         for i in range(num_bundles):
