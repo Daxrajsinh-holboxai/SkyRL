@@ -139,7 +139,8 @@ def create_inference_servers(
                 mooncake_bootstrap_base_port=MOONCAKE_BOOTSTRAP_BASE_PORT + i * servers_per_group * SERVER_PORT_STRIDE,
                 distributed_executor_backend=ie_cfg.distributed_executor_backend,
                 enable_ray_prometheus_stats=ie_cfg.enable_ray_prometheus_stats,
-                use_expandable_segments=ie_cfg.use_expandable_segments, device_resource_key=device_res,
+                use_expandable_segments=ie_cfg.use_expandable_segments,
+                device_resource_key=device_res,
             )
             for i in range(num_prefill)
         ]
@@ -163,7 +164,8 @@ def create_inference_servers(
                 + (num_prefill + i) * servers_per_group * SERVER_PORT_STRIDE,
                 distributed_executor_backend=ie_cfg.distributed_executor_backend,
                 enable_ray_prometheus_stats=ie_cfg.enable_ray_prometheus_stats,
-                use_expandable_segments=ie_cfg.use_expandable_segments, device_resource_key=device_res,
+                use_expandable_segments=ie_cfg.use_expandable_segments,
+                device_resource_key=device_res,
             )
             for i in range(num_decode)
         ]
@@ -240,7 +242,8 @@ def create_inference_servers(
                 distributed_executor_backend=ie_cfg.distributed_executor_backend,
                 placement_group_bundle_offset=i * gpus_per_server * ie_cfg.data_parallel_size,
                 enable_ray_prometheus_stats=ie_cfg.enable_ray_prometheus_stats,
-                use_expandable_segments=ie_cfg.use_expandable_segments, device_resource_key=device_res,
+                use_expandable_segments=ie_cfg.use_expandable_segments,
+                device_resource_key=device_res,
             )
             for i in range(ie_cfg.num_engines)
         ]
